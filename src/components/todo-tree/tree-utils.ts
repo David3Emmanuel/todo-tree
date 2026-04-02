@@ -1,7 +1,5 @@
 import type { DropPosition, StarredItem, TreeNode } from './types'
 
-let idCounter = 0
-
 function toSlug(value: string): string {
   const normalized = value
     .toLowerCase()
@@ -12,18 +10,43 @@ function toSlug(value: string): string {
   return normalized || 'task'
 }
 
-export const uid = (label = 'task') => {
-  idCounter += 1
-  const slug = toSlug(label)
-  const timePart = Date.now().toString(36).slice(-6)
-  const counterPart = idCounter.toString(36).padStart(3, '0')
-  return `${slug}-${timePart}-${counterPart}`
+export function uid(label = 'task'): string {
+  return toSlug(label)
+}
+
+export function makeUniqueUid(
+  tree: TreeNode[],
+  label = 'task',
+  excludeId?: string,
+): string {
+  const base = uid(label)
+  const used = new Set<string>()
+
+  const collect = (nodes: TreeNode[]): void => {
+    for (const node of nodes) {
+      if (node.id !== excludeId) used.add(node.id)
+      collect(node.children)
+    }
+  }
+
+  collect(tree)
+
+  if (!used.has(base)) return base
+
+  let count = 2
+  let candidate = `${base}-${count}`
+  while (used.has(candidate)) {
+    count += 1
+    candidate = `${base}-${count}`
+  }
+
+  return candidate
 }
 
 export const dc = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T
 
-export const makeNode = (): TreeNode => ({
-  id: uid('task'),
+export const makeNode = (tree: TreeNode[], label = 'task'): TreeNode => ({
+  id: makeUniqueUid(tree, label),
   text: '',
   completed: false,
   collapsed: false,
