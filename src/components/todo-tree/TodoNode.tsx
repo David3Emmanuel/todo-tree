@@ -7,6 +7,7 @@ import {
   getProgress,
   indentN,
   makeNode,
+  makeUniqueUid,
   moveN,
   outdentN,
   rem,
@@ -31,33 +32,66 @@ export function TodoNode({
   const isEditing = editingId === node.id
   const paddingLeft = 14 + depth * 22
 
+  const finalizeUid = (currentId: string, currentText: string) => {
+    let nextId = currentId
+    setTree((prev) => {
+      nextId = makeUniqueUid(prev, currentText, currentId)
+      if (nextId === currentId) return prev
+      return upd(prev, currentId, (target) => {
+        target.id = nextId
+      })
+    })
+
+    if (nextId !== currentId) {
+      setZoom((prev) =>
+        prev.map((crumb) =>
+          crumb.id === currentId ? { ...crumb, id: nextId } : crumb,
+        ),
+      )
+    }
+
+    return nextId
+  }
+
   const onKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && event.shiftKey) {
       event.preventDefault()
-      const childNode = makeNode()
-      setTree((prev) =>
-        upd(prev, node.id, (target) => {
+      const committedId = finalizeUid(node.id, node.text)
+      let createdId = ''
+      setTree((prev) => {
+        const childNode = makeNode(prev)
+        createdId = childNode.id
+        return upd(prev, committedId, (target) => {
           target.children.push(childNode)
           target.collapsed = false
-        }),
-      )
-      setEditingId(childNode.id)
+        })
+      })
+      if (createdId) setEditingId(createdId)
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      const nextNode = makeNode()
-      setTree((prev) => addSib(prev, node.id, nextNode))
-      setEditingId(nextNode.id)
+      const committedId = finalizeUid(node.id, node.text)
+      let createdId = ''
+      setTree((prev) => {
+        const nextNode = makeNode(prev)
+        createdId = nextNode.id
+        return addSib(prev, committedId, nextNode)
+      })
+      if (createdId) setEditingId(createdId)
     } else if (event.key === 'Tab' && !event.shiftKey) {
       event.preventDefault()
-      setTree((prev) => indentN(prev, node.id))
+      const committedId = finalizeUid(node.id, node.text)
+      setTree((prev) => indentN(prev, committedId))
     } else if (event.key === 'Tab' && event.shiftKey) {
       event.preventDefault()
-      setTree((prev) => outdentN(prev, node.id))
+      const committedId = finalizeUid(node.id, node.text)
+      setTree((prev) => outdentN(prev, committedId))
     } else if (event.key === 'Backspace' && node.text === '') {
       event.preventDefault()
       setTree((prev) => rem(prev, node.id))
       setEditingId(null)
     } else if (event.key === 'Escape') {
+      const committedId = finalizeUid(node.id, node.text)
+      if (editingId === node.id) setEditingId(committedId)
       setEditingId(null)
     }
   }
@@ -148,15 +182,24 @@ export function TodoNode({
             className="node-input"
             autoFocus
             value={node.text}
-            onChange={(event) =>
+            onChange={(event) => {
+              const nextText = event.target.value
               setTree((prev) =>
                 upd(prev, node.id, (target) => {
-                  target.text = event.target.value
+                  target.text = nextText
                 }),
               )
-            }
+              setZoom((prev) =>
+                prev.map((crumb) =>
+                  crumb.id === node.id ? { ...crumb, text: nextText } : crumb,
+                ),
+              )
+            }}
             onKeyDown={onKey}
-            onBlur={() => setEditingId(null)}
+            onBlur={() => {
+              finalizeUid(node.id, node.text)
+              setEditingId(null)
+            }}
             placeholder="Task name..."
           />
         ) : (

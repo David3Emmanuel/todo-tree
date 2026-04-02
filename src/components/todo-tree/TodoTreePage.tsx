@@ -78,18 +78,22 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   const starred = getAllStarred(tree)
 
   const addRoot = () => {
-    const node = makeNode()
-    if (zoomedNode) {
-      setTree((prev) =>
-        upd(prev, zoomedNode.id, (target) => {
+    let createdId = ''
+    setTree((prev) => {
+      const node = makeNode(prev)
+      createdId = node.id
+
+      if (zoomedNode) {
+        return upd(prev, zoomedNode.id, (target) => {
           target.children.push(node)
           target.collapsed = false
-        }),
-      )
-    } else {
-      setTree((prev) => [...prev, node])
-    }
-    setEditingId(node.id)
+        })
+      }
+
+      return [...prev, node]
+    })
+
+    if (createdId) setEditingId(createdId)
   }
 
   const ctx: CtxValue = {
