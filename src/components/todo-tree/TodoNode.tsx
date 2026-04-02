@@ -63,62 +63,97 @@ export function TodoNode({
   const isEditing = editingId === node.id
   const paddingLeft = 14 + depth * 22
 
-  const finalizeUid = (currentId: string, currentText: string) => {
-    let nextId = currentId
-    setTree((prev) => {
-      nextId = makeUniqueUid(prev, currentText, currentId)
-      if (nextId === currentId) return prev
-      return upd(prev, currentId, (target) => {
-        target.id = nextId
-      })
-    })
+  const getCommittedId = (currentId: string, currentText: string) =>
+    makeUniqueUid(tree, currentText, currentId)
 
-    if (nextId !== currentId) {
-      setZoom((prev) =>
-        prev.map((crumb) =>
-          crumb.id === currentId ? { ...crumb, id: nextId } : crumb,
-        ),
-      )
+  const updateZoomForCommittedId = (currentId: string, nextId: string) => {
+    if (nextId === currentId) {
+      return
     }
 
-    return nextId
+    setZoom((prev) =>
+      prev.map((crumb) =>
+        crumb.id === currentId ? { ...crumb, id: nextId } : crumb,
+      ),
+    )
   }
 
   const onKey = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && event.shiftKey) {
       event.preventDefault()
-      const committedId = finalizeUid(node.id, node.text)
+      const committedId = getCommittedId(node.id, node.text)
+      updateZoomForCommittedId(node.id, committedId)
       setTree((prev) => {
-        const childNode = makeNode(prev)
+        const treeWithCommittedId =
+          committedId === node.id
+            ? prev
+            : upd(prev, node.id, (target) => {
+                target.id = committedId
+              })
+        const childNode = makeNode(treeWithCommittedId)
         pendingEditingIdRef.current = childNode.id
-        return upd(prev, committedId, (target) => {
+        return upd(treeWithCommittedId, committedId, (target) => {
           target.children.push(childNode)
           target.collapsed = false
         })
       })
     } else if (event.key === 'Enter') {
       event.preventDefault()
-      const committedId = finalizeUid(node.id, node.text)
+      const committedId = getCommittedId(node.id, node.text)
+      updateZoomForCommittedId(node.id, committedId)
       setTree((prev) => {
-        const nextNode = makeNode(prev)
+        const treeWithCommittedId =
+          committedId === node.id
+            ? prev
+            : upd(prev, node.id, (target) => {
+                target.id = committedId
+              })
+        const nextNode = makeNode(treeWithCommittedId)
         pendingEditingIdRef.current = nextNode.id
-        return addSib(prev, committedId, nextNode)
+        return addSib(treeWithCommittedId, committedId, nextNode)
       })
     } else if (event.key === 'Tab' && !event.shiftKey) {
       event.preventDefault()
-      const committedId = finalizeUid(node.id, node.text)
-      setTree((prev) => indentN(prev, committedId))
+      const committedId = getCommittedId(node.id, node.text)
+      updateZoomForCommittedId(node.id, committedId)
+      setTree((prev) => {
+        const treeWithCommittedId =
+          committedId === node.id
+            ? prev
+            : upd(prev, node.id, (target) => {
+                target.id = committedId
+              })
+        return indentN(treeWithCommittedId, committedId)
+      })
     } else if (event.key === 'Tab' && event.shiftKey) {
       event.preventDefault()
-      const committedId = finalizeUid(node.id, node.text)
-      setTree((prev) => outdentN(prev, committedId))
+      const committedId = getCommittedId(node.id, node.text)
+      updateZoomForCommittedId(node.id, committedId)
+      setTree((prev) => {
+        const treeWithCommittedId =
+          committedId === node.id
+            ? prev
+            : upd(prev, node.id, (target) => {
+                target.id = committedId
+              })
+        return outdentN(treeWithCommittedId, committedId)
+      })
     } else if (event.key === 'Backspace' && node.text === '') {
       event.preventDefault()
       setTree((prev) => rem(prev, node.id))
       setEditingId(null)
     } else if (event.key === 'Escape') {
-      const committedId = finalizeUid(node.id, node.text)
-      if (editingId === node.id) setEditingId(committedId)
+      const committedId = getCommittedId(node.id, node.text)
+      updateZoomForCommittedId(node.id, committedId)
+      setTree((prev) => {
+        if (committedId === node.id) {
+          return prev
+        }
+
+        return upd(prev, node.id, (target) => {
+          target.id = committedId
+        })
+      })
       setEditingId(null)
     }
   }
@@ -224,7 +259,17 @@ export function TodoNode({
             }}
             onKeyDown={onKey}
             onBlur={() => {
-              finalizeUid(node.id, node.text)
+              const committedId = getCommittedId(node.id, node.text)
+              updateZoomForCommittedId(node.id, committedId)
+              setTree((prev) => {
+                if (committedId === node.id) {
+                  return prev
+                }
+
+                return upd(prev, node.id, (target) => {
+                  target.id = committedId
+                })
+              })
               setEditingId(null)
             }}
             placeholder="Task name..."
