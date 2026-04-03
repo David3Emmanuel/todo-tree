@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth/auth-context'
 import { BrandHeader } from '../layout/BrandHeader'
 import { LoadingScreen } from '../layout/LoadingScreen'
+import { FocusPomodoro } from './FocusPomodoro'
 import { HarvestView } from './HarvestView'
 import { TodoCtx } from './todo-context'
 import { TodoNode } from './TodoNode'
@@ -539,6 +540,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                       Close
                     </button>
                   </div>
+                  <FocusPomodoro />
                   <div className="focus-modal-body">
                     {renderFocusNode(focusRoot)}
                   </div>

@@ -8,6 +8,7 @@ import {
   upd,
 } from './tree-utils'
 import type { TreeNode } from './types'
+import { FocusPomodoro } from './FocusPomodoro'
 
 export function HarvestView() {
   const { tree, setTree } = useTodoCtx()
@@ -198,6 +199,7 @@ export function HarvestView() {
                 Close
               </button>
             </div>
+            <FocusPomodoro />
             <div className="focus-modal-body">{renderFocusNode(focusRoot)}</div>
           </section>
         </div>

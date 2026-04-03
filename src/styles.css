@@ -1095,6 +1095,104 @@ body,
   padding: 0.625rem 0.625rem 0.875rem;
 }
 
+.focus-pomodoro {
+  margin: 0 0.625rem;
+  padding: 0.625rem 0.75rem 0.7rem;
+  border: 0.0625rem solid #2a2522;
+  border-radius: 0.6rem;
+  background: linear-gradient(180deg, rgba(28, 24, 20, 0.85), rgba(21, 19, 17, 0.78));
+}
+
+.focus-pomodoro-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.focus-pomodoro-kicker {
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #a59c92;
+  font-family: 'Outfit', sans-serif;
+}
+
+.focus-pomodoro-time {
+  margin-top: 0.2rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  font-family: 'Courier Prime', monospace;
+  color: #f0e4d5;
+}
+
+.focus-pomodoro-time.done {
+  color: #cf7d3c;
+}
+
+.focus-pomodoro-presets {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.focus-preset {
+  border: 0.0625rem solid #3b332d;
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+  background: #151311;
+  color: #c8b9a8;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.focus-preset.active {
+  border-color: #cf7d3c;
+  color: #f3dfcb;
+  background: rgba(207, 125, 60, 0.14);
+}
+
+.focus-pomodoro-controls {
+  margin-top: 0.55rem;
+  display: flex;
+  gap: 0.45rem;
+}
+
+.focus-pomo-btn {
+  border: 0.0625rem solid #37312c;
+  border-radius: 0.4rem;
+  padding: 0.28rem 0.62rem;
+  background: #141211;
+  color: #ddd2c5;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.73rem;
+  cursor: pointer;
+}
+
+.focus-pomo-btn.primary {
+  border-color: #cf7d3c;
+  background: rgba(207, 125, 60, 0.14);
+  color: #f4e5d5;
+}
+
+.focus-pomo-btn:hover,
+.focus-preset:hover {
+  filter: brightness(1.1);
+}
+
+.focus-pomo-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+  filter: none;
+}
+
+.focus-pomodoro-foot {
+  margin-top: 0.45rem;
+  font-size: 0.66rem;
+  color: #9c948a;
+  font-family: 'Courier Prime', monospace;
+}
+
 .focus-node-wrap {
   margin-top: 0.125rem;
 }
@@ -1157,6 +1255,19 @@ body,
 
   .focus-modal-body {
     padding: 0.5rem;
+  }
+
+  .focus-pomodoro {
+    margin: 0 0.5rem;
+  }
+
+  .focus-pomodoro-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .focus-pomodoro-controls {
+    flex-wrap: wrap;
   }
 }
 
