@@ -7,6 +7,11 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import {
+  readParsedFromStorage,
+  removeStorageItem,
+  writeJsonToStorage,
+} from '../../utils/storage'
 
 const AUTH_STORAGE_KEY = 'todo-tree-auth'
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:1337'
@@ -67,36 +72,28 @@ function parseUser(value: unknown): AuthUser | null {
 }
 
 function readStoredJwt(): string | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
+  return readParsedFromStorage(
+    AUTH_STORAGE_KEY,
+    (value) => {
+      if (!isObject(value)) {
+        return null
+      }
 
-  const raw = window.localStorage.getItem(AUTH_STORAGE_KEY)
-  if (!raw) {
-    return null
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as { jwt?: unknown }
-    return typeof parsed.jwt === 'string' && parsed.jwt.length > 0
-      ? parsed.jwt
-      : null
-  } catch {
-    return null
-  }
+      return typeof value.jwt === 'string' && value.jwt.length > 0
+        ? value.jwt
+        : null
+    },
+    null,
+  )
 }
 
 function storeJwt(jwt: string | null): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-
   if (!jwt) {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY)
+    removeStorageItem(AUTH_STORAGE_KEY)
     return
   }
 
-  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ jwt }))
+  writeJsonToStorage(AUTH_STORAGE_KEY, { jwt })
 }
 
 async function parseJsonResponse(response: Response): Promise<unknown> {

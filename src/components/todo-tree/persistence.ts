@@ -1,4 +1,5 @@
 import type { Breadcrumb, PersistedState, TreeNode } from './types'
+import { readParsedFromStorage, writeJsonToStorage } from '../../utils/storage'
 
 const STORAGE_KEY = 'todo-tree-state'
 
@@ -43,37 +44,27 @@ function emptyPersistedState(): PersistedState {
 }
 
 export function loadPersistedState(): PersistedState {
-  if (typeof window === 'undefined') {
-    return emptyPersistedState()
-  }
+  return readParsedFromStorage(
+    STORAGE_KEY,
+    (value) => {
+      const parsed = (value ?? {}) as Partial<PersistedState> & {
+        suggestionHides?: unknown
+      }
 
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) {
-      return emptyPersistedState()
-    }
-
-    const parsed = JSON.parse(raw) as Partial<PersistedState> & {
-      suggestionHides?: unknown
-    }
-    return {
-      tree:
-        Array.isArray(parsed.tree) && parsed.tree.length
-          ? normalizeTree(parsed.tree as TreeNode[])
-          : [],
-      zoom: Array.isArray(parsed.zoom) ? (parsed.zoom as Breadcrumb[]) : [],
-      view: parsed.view === 'harvest' ? 'harvest' : 'tree',
-      suggestionHides: normalizeSuggestionHides(parsed.suggestionHides),
-    }
-  } catch {
-    return emptyPersistedState()
-  }
+      return {
+        tree:
+          Array.isArray(parsed.tree) && parsed.tree.length
+            ? normalizeTree(parsed.tree as TreeNode[])
+            : [],
+        zoom: Array.isArray(parsed.zoom) ? (parsed.zoom as Breadcrumb[]) : [],
+        view: parsed.view === 'harvest' ? 'harvest' : 'tree',
+        suggestionHides: normalizeSuggestionHides(parsed.suggestionHides),
+      }
+    },
+    emptyPersistedState(),
+  )
 }
 
 export function savePersistedState(state: PersistedState): void {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  writeJsonToStorage(STORAGE_KEY, state)
 }
