@@ -118,24 +118,31 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   }
 
   useEffect(() => {
-    if (isHydrating || isAuthenticated) {
+    if (isHydrating || isAuthenticated || location.pathname === '/auth') {
       return
     }
 
-    void navigate({ to: '/auth', replace: true })
-  }, [isAuthenticated, isHydrating, navigate])
+    void navigate({ to: '/auth', replace: true }).catch(() => {
+      window.location.replace('/auth')
+    })
+  }, [isAuthenticated, isHydrating, location.pathname, navigate])
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setIsReady(false)
+      return
+    }
+
     const persisted = loadPersistedState()
     setTree(persisted.tree)
     setZoom(persisted.zoom)
     setView(persisted.view)
     setSuggestionHides(persisted.suggestionHides ?? {})
     setIsReady(true)
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
-    if (!isReady) {
+    if (!isAuthenticated || !isReady) {
       return
     }
 
@@ -154,7 +161,13 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     setZoom((prev) =>
       isSameZoom(prev, resolvedZoomFromPath) ? prev : resolvedZoomFromPath,
     )
-  }, [isReady, location.pathname, zoomPath, resolvedZoomFromPath])
+  }, [
+    isAuthenticated,
+    isReady,
+    location.pathname,
+    zoomPath,
+    resolvedZoomFromPath,
+  ])
 
   const activeSuggestionHides = useMemo(
     () => pruneSuggestionHides(suggestionHides, suggestionTick),
@@ -162,7 +175,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   )
 
   useEffect(() => {
-    if (!isReady) {
+    if (!isAuthenticated || !isReady) {
       return
     }
 
@@ -220,7 +233,14 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     if (zoomSyncSourceRef.current === 'path') {
       zoomSyncSourceRef.current = null
     }
-  }, [isReady, zoom, resolvedZoomFromPath, location.pathname, navigate])
+  }, [
+    isAuthenticated,
+    isReady,
+    zoom,
+    resolvedZoomFromPath,
+    location.pathname,
+    navigate,
+  ])
 
   const suggestions = useMemo(() => {
     const now = suggestionTick
@@ -232,7 +252,36 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     )
   }, [activeSuggestionHides, suggestionTick, tree])
 
-  if (isHydrating || !isAuthenticated || !isReady) {
+  if (isHydrating) {
+    return (
+      <div className="app">
+        <header className="header">
+          <div className="brand">
+            <span className="brand-icon">⬡</span>
+            <div>
+              <div className="brand-name">TodoTree</div>
+              <div className="brand-sub">
+                Infinite hierarchy · Focused execution
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="main loading-main">
+          <div className="loading-shell">
+            <div className="loading-spinner" />
+            <div className="loading-copy">Loading your tree...</div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null
+  }
+
+  if (!isReady) {
     return (
       <div className="app">
         <header className="header">
