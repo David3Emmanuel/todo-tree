@@ -1090,6 +1090,29 @@ body,
   color: #e7dfd5;
 }
 
+.focus-close-btn {
+  width: 2rem;
+  height: 2rem;
+  border: 0.0625rem solid #36312d;
+  border-radius: 999px;
+  background: #171513;
+  color: #d8cfc4;
+  font-family: 'Courier Prime', monospace;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.focus-close-btn:hover {
+  border-color: #cf7d3c;
+  color: #f0e2d3;
+  background: #1c1815;
+}
+
 .focus-modal-body {
   overflow: auto;
   padding: 0.625rem 0.625rem 0.875rem;

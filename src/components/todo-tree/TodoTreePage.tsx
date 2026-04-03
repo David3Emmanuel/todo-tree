@@ -534,10 +534,12 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                       </h2>
                     </div>
                     <button
-                      className="tab"
+                      className="focus-close-btn"
                       onClick={() => setFocusRootId(null)}
+                      aria-label="Close focus modal"
+                      title="Close"
                     >
-                      Close
+                      ×
                     </button>
                   </div>
                   <FocusPomodoro />

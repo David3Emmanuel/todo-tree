@@ -195,8 +195,13 @@ export function HarvestView() {
                   {focusRoot.text || 'Untitled task'}
                 </h2>
               </div>
-              <button className="tab" onClick={() => setFocusRootId(null)}>
-                Close
+              <button
+                className="focus-close-btn"
+                onClick={() => setFocusRootId(null)}
+                aria-label="Close focus modal"
+                title="Close"
+              >
+                ×
               </button>
             </div>
             <FocusPomodoro />
