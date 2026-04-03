@@ -333,7 +333,7 @@ export function TodoNode({
           </button>
           <button
             className={`act${node.starred ? ' starred' : ''}`}
-            title={node.starred ? 'Unpin from Focus' : 'Pin to Focus'}
+            title={node.starred ? 'Unpin from Harvest' : 'Pin to Harvest'}
             onClick={() =>
               setTree((prev) =>
                 upd(prev, node.id, (target) => {

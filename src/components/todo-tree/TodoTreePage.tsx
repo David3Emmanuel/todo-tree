@@ -268,7 +268,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
               className={`tab${view === 'harvest' ? ' active' : ''}`}
               onClick={() => setView('harvest')}
             >
-              Focus{' '}
+              Harvest{' '}
               {starred.length > 0 && (
                 <span className="badge">{starred.length}</span>
               )}
@@ -507,7 +507,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                 <span className="key">+</span> zoom in
               </div>
               <div className="shortcut">
-                <span className="key">*</span> pin to focus
+                <span className="key">*</span> pin to harvest
               </div>
               <div className="shortcut">
                 <span className="key">☑</span> toggle category
@@ -523,12 +523,12 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                   className="focus-modal island-shell"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Focused subtree"
+                  aria-label="Harvest subtree"
                   onClick={(event) => event.stopPropagation()}
                 >
                   <div className="focus-modal-head">
                     <div>
-                      <div className="suggestions-kicker">Focus</div>
+                      <div className="suggestions-kicker">Harvest</div>
                       <h2 className="focus-modal-title">
                         {focusRoot.text || 'Untitled task'}
                       </h2>
@@ -536,7 +536,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                     <button
                       className="focus-close-btn"
                       onClick={() => setFocusRootId(null)}
-                      aria-label="Close focus modal"
+                      aria-label="Close harvest modal"
                       title="Close"
                     >
                       ×

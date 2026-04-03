@@ -123,7 +123,7 @@ export function HarvestView() {
                 setFocusRootId(item.id)
               }
             }}
-            title="Open focused subtree"
+            title="Open harvest subtree"
           >
             <button
               className={`check${isFolder ? ' folder' : ''}${allDone ? ' done' : ''}`}
@@ -185,12 +185,12 @@ export function HarvestView() {
             className="focus-modal island-shell"
             role="dialog"
             aria-modal="true"
-            aria-label="Focused subtree"
+            aria-label="Harvest subtree"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="focus-modal-head">
               <div>
-                <div className="suggestions-kicker">Focus</div>
+                <div className="suggestions-kicker">Harvest</div>
                 <h2 className="focus-modal-title">
                   {focusRoot.text || 'Untitled task'}
                 </h2>
@@ -198,7 +198,7 @@ export function HarvestView() {
               <button
                 className="focus-close-btn"
                 onClick={() => setFocusRootId(null)}
-                aria-label="Close focus modal"
+                aria-label="Close harvest modal"
                 title="Close"
               >
                 ×
