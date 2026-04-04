@@ -115,6 +115,8 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   const [pendingSuggestionHides, setPendingSuggestionHides] = useState<
     Record<string, number>
   >({})
+  const [isGuestReminderDismissed, setIsGuestReminderDismissed] =
+    useState(false)
   const pendingEditingIdRef = useRef<string | null>(null)
   const pendingSuggestionHideTimersRef = useRef<Record<string, number>>({})
   const suggestionSeedRef = useRef(Math.random().toString(36).slice(2))
@@ -288,6 +290,8 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
       )
       .slice(0, 3)
   }, [activeSuggestionHides, suggestionTick, tree])
+
+  const showGuestReminder = !isAuthenticated && !isGuestReminderDismissed
 
   if (isHydrating) {
     return <LoadingScreen message="Loading your tree..." />
@@ -556,6 +560,35 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
             </button>
           </div>
         </header>
+
+        {showGuestReminder && (
+          <section className="guest-save-reminder rise-in" role="status">
+            <div className="guest-save-copy">
+              <p className="guest-save-note">
+                Your edits are saved on this device. Sign in to keep a cloud
+                backup and access your tree on other devices.
+              </p>
+            </div>
+            <div className="guest-save-actions">
+              <button
+                className="guest-save-login-btn"
+                onClick={() => {
+                  void navigate({ to: '/auth' })
+                }}
+              >
+                Sign in to sync
+              </button>
+              <button
+                className="guest-save-dismiss-btn"
+                onClick={() => setIsGuestReminderDismissed(true)}
+                aria-label="Dismiss guest save reminder"
+                title="Dismiss"
+              >
+                <X className="icon-xs" aria-hidden="true" />
+              </button>
+            </div>
+          </section>
+        )}
 
         {view === 'tree' && suggestions.length > 0 && (
           <section className="suggestions rise-in">
