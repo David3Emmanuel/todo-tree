@@ -113,6 +113,7 @@ export function HideUntilTaskPicker({
     ? createPortal(
         <div
           className="suggestion-task-list suggestion-task-list-floating"
+          data-suggestion-picker-portal="true"
           role="listbox"
           style={panelStyle}
         >
@@ -125,6 +126,9 @@ export function HideUntilTaskPicker({
                   key={option.id}
                   className={`suggestion-task-option${isSelected ? ' selected' : ''}`}
                   type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                  }}
                   onClick={(event) => {
                     event.stopPropagation()
                     setSelectedTaskId(option.id)

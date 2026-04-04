@@ -290,9 +290,18 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
         `article[data-suggestion-id="${hideMenuId}"]`,
       )
       const menu = document.querySelector('.suggestion-hide-menu[style]')
+      const pickerPortal = document.querySelector(
+        '[data-suggestion-picker-portal="true"]',
+      )
 
       // Close if clicking outside both the card and the floating menu
-      if (card && menu && !card.contains(target) && !menu.contains(target)) {
+      if (
+        card &&
+        menu &&
+        !card.contains(target) &&
+        !menu.contains(target) &&
+        !pickerPortal?.contains(target)
+      ) {
         closeHideMenu()
       }
     }
