@@ -132,6 +132,8 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     setView,
     setSuggestionHides,
     activeSuggestionHides,
+    loginReconcileConflict,
+    resolveLoginReconcileConflict,
     suggestionTick,
   } = usePersistence(isAuthenticated, jwt)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -145,6 +147,12 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   >({})
   const [isGuestReminderDismissed, setIsGuestReminderDismissed] =
     useState(false)
+  const [isConflictModalDismissed, setIsConflictModalDismissed] =
+    useState(false)
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false)
+  const [conflictResolutionError, setConflictResolutionError] = useState<
+    string | null
+  >(null)
   const pendingEditingIdRef = useRef<string | null>(null)
   const pendingSuggestionHideTimersRef = useRef<Record<string, number>>({})
   const suggestionSeedRef = useRef(Math.random().toString(36).slice(2))
@@ -174,6 +182,18 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     pendingEditingIdRef.current = null
     setEditingId(nextEditingId)
   }, [tree])
+
+  useEffect(() => {
+    if (!loginReconcileConflict) {
+      setIsConflictModalDismissed(false)
+      setIsResolvingConflict(false)
+      setConflictResolutionError(null)
+      return
+    }
+
+    setIsConflictModalDismissed(false)
+    setConflictResolutionError(null)
+  }, [loginReconcileConflict])
 
   const focusRoot = useMemo(
     () => (focusRootId ? findNode(tree, focusRootId) : null),
@@ -428,6 +448,8 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   }, [isAuthenticated])
 
   const showGuestReminder = !isAuthenticated && !isGuestReminderDismissed
+  const showLoginConflictModal =
+    Boolean(loginReconcileConflict) && !isConflictModalDismissed
 
   if (isHydrating) {
     return <LoadingScreen message="Loading your tree..." />
@@ -633,6 +655,22 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     setHideMenuId(null)
   }
 
+  const handleResolveConflict = async (
+    resolution: 'keep-local' | 'keep-cloud',
+  ) => {
+    setConflictResolutionError(null)
+    setIsResolvingConflict(true)
+
+    try {
+      await resolveLoginReconcileConflict(resolution)
+      setIsConflictModalDismissed(false)
+    } catch {
+      setConflictResolutionError('Could not apply your choice. Please retry.')
+    } finally {
+      setIsResolvingConflict(false)
+    }
+  }
+
   const ctx: CtxValue = {
     tree,
     setTree,
@@ -731,6 +769,21 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                 <X className="icon-xs" aria-hidden="true" />
               </button>
             </div>
+          </section>
+        )}
+
+        {loginReconcileConflict && isConflictModalDismissed && (
+          <section className="reconcile-alert" role="status">
+            <div className="reconcile-alert-copy">
+              Cloud and local trees conflict. Review to choose which one to
+              keep.
+            </div>
+            <button
+              className="reconcile-alert-btn"
+              onClick={() => setIsConflictModalDismissed(false)}
+            >
+              Review conflict
+            </button>
           </section>
         )}
 
@@ -1022,6 +1075,69 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                   <FocusPomodoro />
                   <div className="focus-modal-body">
                     {renderFocusNode(focusRoot)}
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {showLoginConflictModal && (
+              <div
+                className="reconcile-modal-backdrop"
+                onClick={() => setIsConflictModalDismissed(true)}
+              >
+                <section
+                  className="reconcile-modal island-shell"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Resolve cloud sync conflict"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="reconcile-modal-head">
+                    <div className="reconcile-kicker">Sync conflict</div>
+                    <h2 className="reconcile-title">
+                      Local and cloud snapshots diverged
+                    </h2>
+                    <p className="reconcile-copy">
+                      Choose which version to keep before sync resumes.
+                    </p>
+                  </div>
+
+                  <div className="reconcile-recommendation">
+                    Recommended: Keep Local
+                  </div>
+
+                  {conflictResolutionError && (
+                    <div className="reconcile-error" role="alert">
+                      {conflictResolutionError}
+                    </div>
+                  )}
+
+                  <div className="reconcile-actions">
+                    <button
+                      className="reconcile-btn reconcile-btn-primary"
+                      onClick={() => {
+                        void handleResolveConflict('keep-local')
+                      }}
+                      disabled={isResolvingConflict}
+                    >
+                      Keep Local
+                    </button>
+                    <button
+                      className="reconcile-btn"
+                      onClick={() => {
+                        void handleResolveConflict('keep-cloud')
+                      }}
+                      disabled={isResolvingConflict}
+                    >
+                      Keep Cloud
+                    </button>
+                    <button
+                      className="reconcile-btn reconcile-btn-ghost"
+                      onClick={() => setIsConflictModalDismissed(true)}
+                      disabled={isResolvingConflict}
+                    >
+                      Cancel / Review Later
+                    </button>
                   </div>
                 </section>
               </div>

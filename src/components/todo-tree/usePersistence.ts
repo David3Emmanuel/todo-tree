@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -34,6 +35,8 @@ export type LoginReconcileConflict = {
   localState: PersistedState
   remoteState: PersistedState
 }
+
+export type LoginReconcileResolution = 'keep-local' | 'keep-cloud'
 
 function findNodeById(nodes: TreeNode[], id: string): TreeNode | null {
   for (const node of nodes) {
@@ -138,6 +141,9 @@ export type UsePersistenceResult = {
   setSuggestionHides: Dispatch<SetStateAction<SuggestionHideMap>>
   activeSuggestionHides: SuggestionHideMap
   loginReconcileConflict: LoginReconcileConflict | null
+  resolveLoginReconcileConflict: (
+    resolution: LoginReconcileResolution,
+  ) => Promise<void>
   suggestionTick: number
   setSuggestionTick: Dispatch<SetStateAction<number>>
 }
@@ -417,6 +423,73 @@ export function usePersistence(
     }
   }, [isAuthenticated, isReady, jwt, hasPendingLoginRemoteSnapshot])
 
+  const resolveLoginReconcileConflict = useCallback(
+    async (resolution: LoginReconcileResolution): Promise<void> => {
+      if (!loginReconcileConflict) {
+        return
+      }
+
+      if (resolution === 'keep-local') {
+        const localSyncState = {
+          tree,
+          zoom,
+          view,
+          suggestionHides: activeSuggestionHides,
+        }
+
+        const localFingerprint = buildStateFingerprint(localSyncState)
+        const remoteSaveResult =
+          isAuthenticated && jwt
+            ? await saveRemotePersistedState(jwt, localSyncState)
+            : null
+
+        if (remoteSaveResult?.serverUpdatedAtMs) {
+          setServerUpdatedAtMs(remoteSaveResult.serverUpdatedAtMs)
+        }
+
+        lastSyncedFingerprintRef.current = localFingerprint
+        await savePersistedState({
+          ...localSyncState,
+          localUpdatedAtMs: Date.now(),
+          lastSyncedFingerprint: localFingerprint,
+          serverUpdatedAtMs:
+            remoteSaveResult?.serverUpdatedAtMs || serverUpdatedAtMs,
+        })
+        setLoginReconcileConflict(null)
+        return
+      }
+
+      const remoteState = loginReconcileConflict.remoteState
+      const remoteFingerprint = buildStateFingerprint(remoteState)
+      lastSyncedFingerprintRef.current = remoteFingerprint
+
+      setTree(remoteState.tree)
+      setZoom(remoteState.zoom)
+      setView(remoteState.view)
+      setSuggestionHides(remoteState.suggestionHides)
+      setServerUpdatedAtMs(remoteState.serverUpdatedAtMs)
+      setSuggestionTick(Date.now())
+
+      await savePersistedState({
+        ...remoteState,
+        localUpdatedAtMs: Date.now(),
+        lastSyncedFingerprint: remoteFingerprint,
+        serverUpdatedAtMs: remoteState.serverUpdatedAtMs,
+      })
+      setLoginReconcileConflict(null)
+    },
+    [
+      activeSuggestionHides,
+      isAuthenticated,
+      jwt,
+      loginReconcileConflict,
+      serverUpdatedAtMs,
+      tree,
+      view,
+      zoom,
+    ],
+  )
+
   useEffect(() => {
     if (!isReady) {
       return
@@ -524,6 +597,7 @@ export function usePersistence(
     setSuggestionHides,
     activeSuggestionHides,
     loginReconcileConflict,
+    resolveLoginReconcileConflict,
     suggestionTick,
     setSuggestionTick,
   }
