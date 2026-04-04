@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Check,
   ChevronRight,
+  Square,
   FolderTree,
   Minus,
   Trash2,
@@ -347,7 +348,7 @@ export function TodoNode({
             }
           >
             {isFolder ? (
-              <TreePine className="icon-xs" aria-hidden="true" />
+              <Square className="icon-xs" aria-hidden="true" />
             ) : (
               <FolderTree className="icon-xs" aria-hidden="true" />
             )}
