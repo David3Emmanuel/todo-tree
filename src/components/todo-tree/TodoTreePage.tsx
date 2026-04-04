@@ -22,6 +22,11 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from '@tanstack/react-router'
+import {
+  readParsedFromStorage,
+  removeStorageItem,
+  writeJsonToStorage,
+} from '../../utils/storage'
 import { useAuth } from '../auth/auth-context'
 import { BrandHeader } from '../layout/BrandHeader'
 import { LoadingScreen } from '../layout/LoadingScreen'
@@ -73,6 +78,27 @@ function dateInputToMs(value: string): number | null {
 const SUGGESTION_HIDE_UNDO_MS = 3_000
 const GUEST_REMINDER_EDIT_INTERVAL = 10
 const GUEST_REMINDER_TIME_INTERVAL_MS = 3 * 60 * 1000
+const GUEST_REMINDER_STORAGE_KEY = 'todo-tree-guest-reminder'
+
+function readGuestReminderDismissedAtMs(): number | null {
+  return readParsedFromStorage(
+    GUEST_REMINDER_STORAGE_KEY,
+    (value) => {
+      if (!value || typeof value !== 'object') {
+        return null
+      }
+
+      const dismissedAtMs = Number(
+        (value as { dismissedAtMs?: unknown }).dismissedAtMs,
+      )
+
+      return Number.isFinite(dismissedAtMs) && dismissedAtMs > 0
+        ? dismissedAtMs
+        : null
+    },
+    null,
+  )
+}
 
 function isSuggestionHidden(
   rule: SuggestionHideRule | undefined,
@@ -341,6 +367,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
 
     guestReminderEditCountRef.current = 0
     guestReminderDismissedAtRef.current = null
+    removeStorageItem(GUEST_REMINDER_STORAGE_KEY)
     setIsGuestReminderDismissed(false)
   }, [
     isAuthenticated,
@@ -365,6 +392,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     const timeoutId = window.setTimeout(() => {
       guestReminderEditCountRef.current = 0
       guestReminderDismissedAtRef.current = null
+      removeStorageItem(GUEST_REMINDER_STORAGE_KEY)
       setIsGuestReminderDismissed(false)
     }, remainingMs)
 
@@ -372,13 +400,31 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   }, [isAuthenticated, isGuestReminderDismissed])
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated) {
+      guestReminderEditCountRef.current = 0
+      guestReminderDismissedAtRef.current = null
+      removeStorageItem(GUEST_REMINDER_STORAGE_KEY)
+      setIsGuestReminderDismissed(false)
       return
     }
 
+    const storedDismissedAtMs = readGuestReminderDismissedAtMs()
+    if (!storedDismissedAtMs) {
+      guestReminderDismissedAtRef.current = null
+      setIsGuestReminderDismissed(false)
+      return
+    }
+
+    if (Date.now() - storedDismissedAtMs >= GUEST_REMINDER_TIME_INTERVAL_MS) {
+      guestReminderDismissedAtRef.current = null
+      removeStorageItem(GUEST_REMINDER_STORAGE_KEY)
+      setIsGuestReminderDismissed(false)
+      return
+    }
+
+    guestReminderDismissedAtRef.current = storedDismissedAtMs
     guestReminderEditCountRef.current = 0
-    guestReminderDismissedAtRef.current = null
-    setIsGuestReminderDismissed(false)
+    setIsGuestReminderDismissed(true)
   }, [isAuthenticated])
 
   const showGuestReminder = !isAuthenticated && !isGuestReminderDismissed
@@ -671,8 +717,12 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
               <button
                 className="guest-save-dismiss-btn"
                 onClick={() => {
-                  guestReminderDismissedAtRef.current = Date.now()
+                  const dismissedAtMs = Date.now()
+                  guestReminderDismissedAtRef.current = dismissedAtMs
                   guestReminderEditCountRef.current = 0
+                  writeJsonToStorage(GUEST_REMINDER_STORAGE_KEY, {
+                    dismissedAtMs,
+                  })
                   setIsGuestReminderDismissed(true)
                 }}
                 aria-label="Dismiss guest save reminder"
