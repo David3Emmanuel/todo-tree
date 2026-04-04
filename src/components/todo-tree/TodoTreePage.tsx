@@ -9,7 +9,12 @@ import { TodoCtx } from './todo-context'
 import { TodoNode } from './TodoNode'
 import { usePersistence } from './usePersistence'
 import { useZoomSync } from './useZoomSync'
-import type { Breadcrumb, CtxValue, TreeNode } from './types'
+import type {
+  Breadcrumb,
+  CtxValue,
+  SuggestionHideRule,
+  TreeNode,
+} from './types'
 import {
   collapseAll,
   expandAll,
@@ -40,6 +45,26 @@ function dateInputToMs(value: string): number | null {
   }
 
   return parsed.getTime()
+}
+
+function isSuggestionHidden(
+  rule: SuggestionHideRule | undefined,
+  tree: TreeNode[],
+  now: number,
+): boolean {
+  if (!rule) {
+    return false
+  }
+
+  const hiddenByDate =
+    typeof rule.untilDateMs === 'number' && rule.untilDateMs > now
+
+  const blockerId =
+    typeof rule.untilTaskId === 'string' ? rule.untilTaskId.trim() : ''
+  const blockerNode = blockerId ? findNode(tree, blockerId) : null
+  const hiddenByTask = Boolean(blockerNode && !blockerNode.completed)
+
+  return hiddenByDate || hiddenByTask
 }
 
 export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
@@ -129,11 +154,8 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   const suggestions = useMemo(() => {
     const now = suggestionTick
     return getNextActionSuggestions(tree, suggestionSeedRef.current, 3).filter(
-      (item) => {
-        const hideRule = activeSuggestionHides[item.node.id]
-        const hiddenUntilDateMs = hideRule?.untilDateMs
-        return hiddenUntilDateMs === undefined || hiddenUntilDateMs <= now
-      },
+      (item) =>
+        !isSuggestionHidden(activeSuggestionHides[item.node.id], tree, now),
     )
   }, [activeSuggestionHides, suggestionTick, tree])
 
