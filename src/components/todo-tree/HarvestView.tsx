@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Check, FolderTree, Minus, Wheat, WheatOff, X } from 'lucide-react'
 import { useTodoCtx } from './todo-context'
 import {
   findNode,
@@ -61,7 +62,13 @@ export function HarvestView() {
             disabled={isFolder}
             title={isFolder ? 'Category (not completable)' : undefined}
           >
-            {isFolder ? '∞' : allDone ? '✓' : someDone ? '-' : ''}
+            {isFolder ? (
+              <FolderTree className="icon-xs" aria-hidden="true" />
+            ) : allDone ? (
+              <Check className="icon-xs" aria-hidden="true" />
+            ) : someDone ? (
+              <Minus className="icon-xs" aria-hidden="true" />
+            ) : null}
           </button>
           <div className="focus-node-text-wrap">
             <div
@@ -88,7 +95,7 @@ export function HarvestView() {
   if (!items.length) {
     return (
       <div className="empty">
-        <div style={{ fontSize: 44, opacity: 0.15 }}>★</div>
+        <Wheat className="empty-icon" aria-hidden="true" />
         <div>No pinned tasks yet</div>
         <div style={{ fontSize: 12, color: '#928c86' }}>
           Star tasks in the Tree view to harvest them here
@@ -137,7 +144,11 @@ export function HarvestView() {
               disabled={isFolder}
               title={isFolder ? 'Category (not completable)' : undefined}
             >
-              {isFolder ? '∞' : allDone && '✓'}
+              {isFolder ? (
+                <FolderTree className="icon-xs" aria-hidden="true" />
+              ) : allDone ? (
+                <Check className="icon-xs" aria-hidden="true" />
+              ) : null}
             </button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div
@@ -170,7 +181,7 @@ export function HarvestView() {
                 )
               }}
             >
-              ★
+              <WheatOff className="icon-xs" aria-hidden="true" />
             </button>
           </div>
         )
@@ -201,7 +212,7 @@ export function HarvestView() {
                 aria-label="Close harvest modal"
                 title="Close"
               >
-                ×
+                <X className="icon-sm" aria-hidden="true" />
               </button>
             </div>
             <FocusPomodoro />

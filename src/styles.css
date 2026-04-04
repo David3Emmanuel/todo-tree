@@ -321,8 +321,21 @@ body,
 }
 .brand-icon {
   color: #cf7d3c;
-  font-size: 1.25rem;
-  line-height: 1;
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke-width: 2.1;
+}
+
+.icon-xs {
+  width: 0.8rem;
+  height: 0.8rem;
+  flex-shrink: 0;
+}
+
+.icon-sm {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 .brand-name {
   font-size: 0.9375rem;
@@ -624,6 +637,9 @@ body,
     border-color 0.15s,
     color 0.15s,
     background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .suggestion-hide-btn:hover,
@@ -867,6 +883,9 @@ body,
   border-radius: 0.25rem;
   transition: color 0.15s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 .crumb:hover {
   color: #e6dfd6;
@@ -962,7 +981,6 @@ body,
   align-items: center;
   justify-content: center;
   transition: color 0.15s;
-  font-size: 0.5rem;
 }
 .expand-btn:hover {
   color: #c7c0b9;
@@ -970,6 +988,8 @@ body,
 .expand-btn .arr {
   display: inline-block;
   transition: transform 0.15s;
+  width: 0.625rem;
+  height: 0.625rem;
 }
 .expand-btn.open .arr {
   transform: rotate(90deg);
@@ -1093,11 +1113,13 @@ body,
   border: none;
   cursor: pointer;
   color: #9a938d;
-  font-size: 0.75rem;
   padding: 0.125rem 0.25rem;
   border-radius: 0.1875rem;
-  line-height: 1;
+  line-height: 0;
   transition: color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .act:hover {
   color: #d3ccc4;
@@ -1146,6 +1168,10 @@ body,
   font-size: 0.8125rem;
   cursor: pointer;
   transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
 }
 .btn-add-root:hover {
   border-color: #cf7d3c;
@@ -1162,6 +1188,13 @@ body,
   color: #908a84;
   font-size: 0.875rem;
 }
+
+.empty-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  opacity: 0.15;
+}
+
 .btn-start {
   margin-top: 0.25rem;
   background: #cf7d3c;
@@ -1174,6 +1207,9 @@ body,
   font-weight: 500;
   cursor: pointer;
   transition: opacity 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .btn-start:hover {
   opacity: 0.85;
@@ -1265,9 +1301,6 @@ body,
   border-radius: 999px;
   background: #171513;
   color: #d8cfc4;
-  font-family: 'Courier Prime', monospace;
-  font-size: 1rem;
-  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;

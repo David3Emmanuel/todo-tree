@@ -6,6 +6,20 @@ import {
   useState,
   type CSSProperties,
 } from 'react'
+import {
+  Check,
+  ChevronRight,
+  ChevronsDown,
+  ChevronsUp,
+  EyeOff,
+  FolderTree,
+  LogOut,
+  Minus,
+  Plus,
+  Undo2,
+  Wheat,
+  X,
+} from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../auth/auth-context'
@@ -401,7 +415,13 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
             disabled={isFolder}
             title={isFolder ? 'Category (not completable)' : undefined}
           >
-            {isFolder ? '∞' : allDone ? '✓' : someDone ? '-' : ''}
+            {isFolder ? (
+              <FolderTree className="icon-xs" aria-hidden="true" />
+            ) : allDone ? (
+              <Check className="icon-xs" aria-hidden="true" />
+            ) : someDone ? (
+              <Minus className="icon-xs" aria-hidden="true" />
+            ) : null}
           </button>
           <div className="focus-node-text-wrap">
             <div
@@ -512,6 +532,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
               className={`tab${view === 'harvest' ? ' active' : ''}`}
               onClick={() => setView('harvest')}
             >
+              <Wheat className="icon-xs" aria-hidden="true" />
               Harvest{' '}
               {starred.length > 0 && (
                 <span className="badge">{starred.length}</span>
@@ -524,14 +545,16 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                   onClick={() => setTree(expandAll)}
                   title="Expand all nodes"
                 >
-                  ▼ Expand
+                  <ChevronsDown className="icon-xs" aria-hidden="true" />
+                  Expand
                 </button>
                 <button
                   className="tab"
                   onClick={() => setTree(collapseAll)}
                   title="Collapse all nodes"
                 >
-                  ▶ Collapse
+                  <ChevronsUp className="icon-xs" aria-hidden="true" />
+                  Collapse
                 </button>
               </>
             )}
@@ -542,6 +565,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                 navigate({ to: '/auth' })
               }}
             >
+              <LogOut className="icon-xs" aria-hidden="true" />
               Logout
             </button>
           </div>
@@ -621,6 +645,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                             }}
                             title="Hide this suggestion temporarily"
                           >
+                            <EyeOff className="icon-xs" aria-hidden="true" />
                             Hide
                           </button>
                         </div>
@@ -640,6 +665,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                               undoSuggestionHide(item.node.id)
                             }}
                           >
+                            <Undo2 className="icon-xs" aria-hidden="true" />
                             Undo
                           </button>
                         </div>
@@ -725,6 +751,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
         {view === 'tree' && zoom.length > 0 && (
           <nav className="breadcrumbs">
             <button className="crumb" onClick={() => setZoomFromUi([])}>
+              <FolderTree className="icon-xs" aria-hidden="true" />
               Root
             </button>
             {zoom.map((crumb, index) => (
@@ -732,7 +759,9 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                 key={crumb.id}
                 style={{ display: 'flex', alignItems: 'center', gap: 2 }}
               >
-                <span className="sep">›</span>
+                <span className="sep" aria-hidden="true">
+                  <ChevronRight className="icon-xs" />
+                </span>
                 <button
                   className={`crumb${index === zoom.length - 1 ? ' cur' : ''}`}
                   onClick={() =>
@@ -754,10 +783,11 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
               ))
             ) : (
               <div className="empty">
-                <div style={{ fontSize: 48, opacity: 0.12 }}>⬡</div>
+                <FolderTree className="empty-icon" aria-hidden="true" />
                 <div>Nothing here yet</div>
                 <button className="btn-start" onClick={addRoot}>
-                  + Add first task
+                  <Plus className="icon-xs" aria-hidden="true" />
+                  Add first task
                 </button>
               </div>
             )
@@ -770,7 +800,8 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
           <>
             <footer className="footer">
               <button className="btn-add-root" onClick={addRoot}>
-                + Add task
+                <Plus className="icon-xs" aria-hidden="true" />
+                Add task
               </button>
             </footer>
             <div className="shortcuts">
@@ -822,7 +853,7 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                       aria-label="Close harvest modal"
                       title="Close"
                     >
-                      ×
+                      <X className="icon-sm" aria-hidden="true" />
                     </button>
                   </div>
                   <FocusPomodoro />

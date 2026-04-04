@@ -1,4 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  Check,
+  ChevronRight,
+  FolderTree,
+  Minus,
+  Trash2,
+  TreePine,
+  Wheat,
+  WheatOff,
+  ZoomIn,
+} from 'lucide-react'
 import { useTodoCtx } from './todo-context'
 import type { DropPosition, TreeNode } from './types'
 import {
@@ -221,7 +232,7 @@ export function TodoNode({
           }
           tabIndex={hasKids ? 0 : -1}
         >
-          <span className="arr">▶</span>
+          <ChevronRight className="arr" aria-hidden="true" />
         </button>
 
         <button
@@ -242,7 +253,13 @@ export function TodoNode({
                   : 'Check'
           }
         >
-          {isFolder ? '∞' : allDone ? '✓' : someDone ? '-' : ''}
+          {isFolder ? (
+            <FolderTree className="icon-xs" aria-hidden="true" />
+          ) : allDone ? (
+            <Check className="icon-xs" aria-hidden="true" />
+          ) : someDone ? (
+            <Minus className="icon-xs" aria-hidden="true" />
+          ) : null}
         </button>
 
         {isEditing ? (
@@ -329,7 +346,11 @@ export function TodoNode({
               )
             }
           >
-            {isFolder ? '📁' : '☑'}
+            {isFolder ? (
+              <TreePine className="icon-xs" aria-hidden="true" />
+            ) : (
+              <FolderTree className="icon-xs" aria-hidden="true" />
+            )}
           </button>
           <button
             className={`act${node.starred ? ' starred' : ''}`}
@@ -342,7 +363,11 @@ export function TodoNode({
               )
             }
           >
-            ★
+            {node.starred ? (
+              <Wheat className="icon-xs" aria-hidden="true" />
+            ) : (
+              <WheatOff className="icon-xs" aria-hidden="true" />
+            )}
           </button>
           {hasKids && (
             <button
@@ -355,7 +380,7 @@ export function TodoNode({
                 }
               }}
             >
-              +
+              <ZoomIn className="icon-xs" aria-hidden="true" />
             </button>
           )}
           <button
@@ -363,7 +388,7 @@ export function TodoNode({
             title="Delete"
             onClick={() => setTree((prev) => rem(prev, node.id))}
           >
-            x
+            <Trash2 className="icon-xs" aria-hidden="true" />
           </button>
         </span>
       </div>
