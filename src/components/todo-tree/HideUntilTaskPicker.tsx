@@ -1,4 +1,11 @@
-import { useMemo, useState } from 'react'
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react'
+import { createPortal } from 'react-dom'
 import type { TreeNode } from './types'
 
 type BlockerTaskOption = {
@@ -48,6 +55,9 @@ export function HideUntilTaskPicker({
 }: HideUntilTaskPickerProps) {
   const [query, setQuery] = useState('')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [focused, setFocused] = useState(false)
+  const fieldRef = useRef<HTMLDivElement | null>(null)
+  const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null)
 
   const taskOptions = useMemo(
     () => collectBlockerTaskOptions(tree, excludeId),
@@ -71,62 +81,104 @@ export function HideUntilTaskPicker({
     [selectedTaskId, taskOptions],
   )
 
+  useLayoutEffect(() => {
+    const updatePanelStyle = (): void => {
+      const field = fieldRef.current
+      if (!field || !focused) {
+        setPanelStyle(null)
+        return
+      }
+
+      const rect = field.getBoundingClientRect()
+      setPanelStyle({
+        position: 'fixed',
+        left: `${rect.left}px`,
+        top: `${rect.bottom + 6}px`,
+        width: `${rect.width}px`,
+        zIndex: 99999,
+      })
+    }
+
+    updatePanelStyle()
+    window.addEventListener('resize', updatePanelStyle)
+    window.addEventListener('scroll', updatePanelStyle, true)
+
+    return () => {
+      window.removeEventListener('resize', updatePanelStyle)
+      window.removeEventListener('scroll', updatePanelStyle, true)
+    }
+  }, [focused])
+
+  const floatingList = panelStyle
+    ? createPortal(
+        <div
+          className="suggestion-task-list suggestion-task-list-floating"
+          role="listbox"
+          style={panelStyle}
+        >
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option) => {
+              const isSelected = option.id === selectedTaskId
+
+              return (
+                <button
+                  key={option.id}
+                  className={`suggestion-task-option${isSelected ? ' selected' : ''}`}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setSelectedTaskId(option.id)
+                    setQuery(option.text)
+                  }}
+                  title={option.pathLabel}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span className="suggestion-task-option-main">
+                    {option.text}
+                  </span>
+                  <span className="suggestion-task-option-meta">
+                    {option.completed ? 'done' : 'open'}
+                    {' · '}
+                    {option.pathLabel}
+                  </span>
+                </button>
+              )
+            })
+          ) : (
+            <div className="suggestion-task-empty">
+              No blocker tasks match that search.
+            </div>
+          )}
+        </div>,
+        document.body,
+      )
+    : null
   return (
     <div className="suggestion-task-picker">
-      <input
-        className="suggestion-task-input"
-        type="text"
-        value={query}
-        placeholder="Search blocker task"
-        onChange={(event) => {
-          setQuery(event.target.value)
-          setSelectedTaskId(null)
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && filteredOptions.length > 0) {
-            event.preventDefault()
-            const [firstOption] = filteredOptions
-            setSelectedTaskId(firstOption.id)
-            setQuery(firstOption.text)
-          }
-        }}
-      />
-      <div className="suggestion-task-list" role="listbox">
-        {filteredOptions.length > 0 ? (
-          filteredOptions.map((option) => {
-            const isSelected = option.id === selectedTaskId
-
-            return (
-              <button
-                key={option.id}
-                className={`suggestion-task-option${isSelected ? ' selected' : ''}`}
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  setSelectedTaskId(option.id)
-                  setQuery(option.text)
-                }}
-                title={option.pathLabel}
-                role="option"
-                aria-selected={isSelected}
-              >
-                <span className="suggestion-task-option-main">
-                  {option.text}
-                </span>
-                <span className="suggestion-task-option-meta">
-                  {option.completed ? 'done' : 'open'}
-                  {' · '}
-                  {option.pathLabel}
-                </span>
-              </button>
-            )
-          })
-        ) : (
-          <div className="suggestion-task-empty">
-            No blocker tasks match that search.
-          </div>
-        )}
+      <div className="suggestion-task-field" ref={fieldRef}>
+        <input
+          className="suggestion-task-input"
+          type="text"
+          value={query}
+          placeholder="Search blocker task"
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setSelectedTaskId(null)
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && filteredOptions.length > 0) {
+              event.preventDefault()
+              const [firstOption] = filteredOptions
+              setSelectedTaskId(firstOption.id)
+              setQuery(firstOption.text)
+            }
+          }}
+        />
       </div>
+      {floatingList}
       <div className="suggestion-task-selected">
         {selectedTask ? (
           <>
