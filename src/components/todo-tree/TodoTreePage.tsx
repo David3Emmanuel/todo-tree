@@ -724,18 +724,18 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
               </>
             )}
             {isAuthenticated ? (
-            <button
-              className="tab"
-              onClick={() => {
-                logout()
+              <button
+                className="tab"
+                onClick={() => {
+                  logout()
                   if (typeof window !== 'undefined') {
                     window.location.assign('/auth')
                   }
-              }}
-            >
-              <LogOut className="icon-xs" aria-hidden="true" />
-              Logout
-            </button>
+                }}
+              >
+                <LogOut className="icon-xs" aria-hidden="true" />
+                Logout
+              </button>
             ) : (
               <a className="tab" href="/auth">
                 <LogIn className="icon-xs" aria-hidden="true" />
@@ -797,12 +797,6 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
             <div className="suggestions-head">
               <div>
                 <div className="suggestions-kicker">Next up</div>
-                <div className="suggestions-title">
-                  Good candidates for your next move
-                </div>
-              </div>
-              <div className="suggestions-note">
-                Weighted toward stars, momentum, and nearly finished branches
               </div>
             </div>
             <div className="suggestions-grid">
