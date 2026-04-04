@@ -23,8 +23,24 @@ import type {
 
 const REMOTE_SYNC_DEBOUNCE_MS = 1200
 
+function findNodeById(nodes: TreeNode[], id: string): TreeNode | null {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return node
+    }
+
+    const found = findNodeById(node.children, id)
+    if (found) {
+      return found
+    }
+  }
+
+  return null
+}
+
 function pruneSuggestionHides(
   hides: SuggestionHideMap,
+  tree: TreeNode[],
   now: number,
 ): SuggestionHideMap {
   const result: SuggestionHideMap = {}
@@ -32,13 +48,17 @@ function pruneSuggestionHides(
   for (const [key, rule] of Object.entries(hides)) {
     const hasFutureDate =
       typeof rule.untilDateMs === 'number' && rule.untilDateMs > now
-    const hasTaskBlocker =
-      typeof rule.untilTaskId === 'string' && rule.untilTaskId.length > 0
+    const blockerId =
+      typeof rule.untilTaskId === 'string' ? rule.untilTaskId.trim() : ''
+    const blockerNode = blockerId ? findNodeById(tree, blockerId) : null
+    const hasActiveTaskBlocker = Boolean(
+      blockerId && blockerNode && !blockerNode.completed,
+    )
 
-    if (hasFutureDate || hasTaskBlocker) {
+    if (hasFutureDate || hasActiveTaskBlocker) {
       result[key] = {
         ...(hasFutureDate ? { untilDateMs: rule.untilDateMs } : {}),
-        ...(hasTaskBlocker ? { untilTaskId: rule.untilTaskId } : {}),
+        ...(hasActiveTaskBlocker ? { untilTaskId: blockerId } : {}),
       }
     }
   }
@@ -165,8 +185,8 @@ export function usePersistence(
   }, [isAuthenticated, jwt])
 
   const activeSuggestionHides = useMemo(
-    () => pruneSuggestionHides(suggestionHides, suggestionTick),
-    [suggestionHides, suggestionTick],
+    () => pruneSuggestionHides(suggestionHides, tree, suggestionTick),
+    [suggestionHides, tree, suggestionTick],
   )
 
   useEffect(() => {
