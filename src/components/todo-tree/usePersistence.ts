@@ -30,6 +30,11 @@ type LoginReconcileClassification =
   | 'no-divergence'
   | 'divergence-conflict'
 
+export type LoginReconcileConflict = {
+  localState: PersistedState
+  remoteState: PersistedState
+}
+
 function findNodeById(nodes: TreeNode[], id: string): TreeNode | null {
   for (const node of nodes) {
     if (node.id === id) {
@@ -132,6 +137,7 @@ export type UsePersistenceResult = {
   suggestionHides: SuggestionHideMap
   setSuggestionHides: Dispatch<SetStateAction<SuggestionHideMap>>
   activeSuggestionHides: SuggestionHideMap
+  loginReconcileConflict: LoginReconcileConflict | null
   suggestionTick: number
   setSuggestionTick: Dispatch<SetStateAction<number>>
 }
@@ -152,6 +158,8 @@ export function usePersistence(
   const [isLoginReconciling, setIsLoginReconciling] = useState(false)
   const [hasPendingLoginRemoteSnapshot, setHasPendingLoginRemoteSnapshot] =
     useState(false)
+  const [loginReconcileConflict, setLoginReconcileConflict] =
+    useState<LoginReconcileConflict | null>(null)
   const lastSyncedFingerprintRef = useRef<string>('')
   const previousIsAuthenticatedRef = useRef<boolean>(isAuthenticated)
   const reconciledLoginKeyRef = useRef<string>('')
@@ -210,6 +218,7 @@ export function usePersistence(
         loginLocalSnapshotRef.current = null
         loginReconcileClassificationRef.current = null
         setHasPendingLoginRemoteSnapshot(false)
+        setLoginReconcileConflict(null)
         setIsLoginReconciling(false)
       }
       return
@@ -244,6 +253,7 @@ export function usePersistence(
           loginRemoteSnapshotRef.current = null
           loginReconcileClassificationRef.current = null
           setHasPendingLoginRemoteSnapshot(false)
+          setLoginReconcileConflict(null)
           return
         }
 
@@ -280,6 +290,134 @@ export function usePersistence(
   ])
 
   useEffect(() => {
+    if (
+      !isAuthenticated ||
+      !isReady ||
+      !jwt ||
+      !hasPendingLoginRemoteSnapshot
+    ) {
+      return
+    }
+
+    const remote = loginRemoteSnapshotRef.current
+    const local = loginLocalSnapshotRef.current
+    const classification = loginReconcileClassificationRef.current
+
+    if (!remote || !local || !classification) {
+      setHasPendingLoginRemoteSnapshot(false)
+      return
+    }
+
+    let isCancelled = false
+
+    void (async () => {
+      try {
+        if (classification === 'local-empty_remote-nonempty') {
+          const remoteFingerprint = buildStateFingerprint(remote.state)
+          lastSyncedFingerprintRef.current = remoteFingerprint
+
+          setTree(remote.state.tree)
+          setZoom(remote.state.zoom)
+          setView(remote.state.view)
+          setSuggestionHides(remote.state.suggestionHides)
+          setServerUpdatedAtMs(remote.state.serverUpdatedAtMs)
+          setSuggestionTick(Date.now())
+
+          await savePersistedState({
+            ...remote.state,
+            localUpdatedAtMs: Date.now(),
+            lastSyncedFingerprint: remoteFingerprint,
+            serverUpdatedAtMs: remote.state.serverUpdatedAtMs,
+          })
+
+          if (!isCancelled) {
+            setLoginReconcileConflict(null)
+          }
+          return
+        }
+
+        if (classification === 'remote-empty_local-nonempty') {
+          const localSyncState = {
+            tree: local.tree,
+            zoom: local.zoom,
+            view: local.view,
+            suggestionHides: local.suggestionHides,
+          }
+
+          const localFingerprint = buildStateFingerprint(localSyncState)
+          const remoteSaveResult = await saveRemotePersistedState(
+            jwt,
+            localSyncState,
+          )
+
+          if (isCancelled) {
+            return
+          }
+
+          if (remoteSaveResult?.serverUpdatedAtMs) {
+            setServerUpdatedAtMs(remoteSaveResult.serverUpdatedAtMs)
+          }
+
+          lastSyncedFingerprintRef.current = localFingerprint
+          await savePersistedState({
+            ...local,
+            localUpdatedAtMs: Date.now(),
+            lastSyncedFingerprint: localFingerprint,
+            serverUpdatedAtMs:
+              remoteSaveResult?.serverUpdatedAtMs || local.serverUpdatedAtMs,
+          })
+
+          setLoginReconcileConflict(null)
+          return
+        }
+
+        if (classification === 'no-divergence') {
+          const localFingerprint = buildStateFingerprint(local)
+          lastSyncedFingerprintRef.current = localFingerprint
+
+          await savePersistedState({
+            ...local,
+            localUpdatedAtMs: Date.now(),
+            lastSyncedFingerprint: localFingerprint,
+            serverUpdatedAtMs:
+              remote.serverUpdatedAtMs || local.serverUpdatedAtMs,
+          })
+
+          if (!isCancelled && remote.serverUpdatedAtMs > 0) {
+            setServerUpdatedAtMs(remote.serverUpdatedAtMs)
+          }
+          if (!isCancelled) {
+            setLoginReconcileConflict(null)
+          }
+          return
+        }
+
+        if (!isCancelled) {
+          setLoginReconcileConflict({
+            localState: local,
+            remoteState: remote.state,
+          })
+        }
+      } catch {
+        // Keep local editability intact if reconcile decision application fails.
+      } finally {
+        if (isCancelled) {
+          return
+        }
+
+        loginRemoteSnapshotRef.current = null
+        loginLocalSnapshotRef.current = null
+        loginReconcileClassificationRef.current = null
+        setHasPendingLoginRemoteSnapshot(false)
+      }
+    })()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [isAuthenticated, isReady, jwt, hasPendingLoginRemoteSnapshot])
+
+  useEffect(() => {
     if (!isReady) {
       return
     }
@@ -303,7 +441,8 @@ export function usePersistence(
       !isReady ||
       !jwt ||
       isLoginReconciling ||
-      hasPendingLoginRemoteSnapshot
+      hasPendingLoginRemoteSnapshot ||
+      Boolean(loginReconcileConflict)
     ) {
       return
     }
@@ -351,6 +490,7 @@ export function usePersistence(
     activeSuggestionHides,
     isLoginReconciling,
     hasPendingLoginRemoteSnapshot,
+    loginReconcileConflict,
   ])
 
   useEffect(() => {
@@ -383,6 +523,7 @@ export function usePersistence(
     suggestionHides,
     setSuggestionHides,
     activeSuggestionHides,
+    loginReconcileConflict,
     suggestionTick,
     setSuggestionTick,
   }
