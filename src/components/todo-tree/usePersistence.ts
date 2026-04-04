@@ -13,19 +13,33 @@ import {
   saveRemotePersistedState,
   savePersistedState,
 } from './persistence'
-import type { Breadcrumb, PersistedState, TreeNode, ViewMode } from './types'
+import type {
+  Breadcrumb,
+  PersistedState,
+  SuggestionHideMap,
+  TreeNode,
+  ViewMode,
+} from './types'
 
 const REMOTE_SYNC_DEBOUNCE_MS = 1200
 
 function pruneSuggestionHides(
-  hides: Record<string, number>,
+  hides: SuggestionHideMap,
   now: number,
-): Record<string, number> {
-  const result: Record<string, number> = {}
+): SuggestionHideMap {
+  const result: SuggestionHideMap = {}
 
-  for (const [key, until] of Object.entries(hides)) {
-    if (until > now) {
-      result[key] = until
+  for (const [key, rule] of Object.entries(hides)) {
+    const hasFutureDate =
+      typeof rule.untilDateMs === 'number' && rule.untilDateMs > now
+    const hasTaskBlocker =
+      typeof rule.untilTaskId === 'string' && rule.untilTaskId.length > 0
+
+    if (hasFutureDate || hasTaskBlocker) {
+      result[key] = {
+        ...(hasFutureDate ? { untilDateMs: rule.untilDateMs } : {}),
+        ...(hasTaskBlocker ? { untilTaskId: rule.untilTaskId } : {}),
+      }
     }
   }
 
@@ -49,9 +63,9 @@ export type UsePersistenceResult = {
   setZoom: Dispatch<SetStateAction<Breadcrumb[]>>
   view: ViewMode
   setView: Dispatch<SetStateAction<ViewMode>>
-  suggestionHides: Record<string, number>
-  setSuggestionHides: Dispatch<SetStateAction<Record<string, number>>>
-  activeSuggestionHides: Record<string, number>
+  suggestionHides: SuggestionHideMap
+  setSuggestionHides: Dispatch<SetStateAction<SuggestionHideMap>>
+  activeSuggestionHides: SuggestionHideMap
   suggestionTick: number
   setSuggestionTick: Dispatch<SetStateAction<number>>
 }
@@ -67,9 +81,7 @@ export function usePersistence(
   const [serverUpdatedAtMs, setServerUpdatedAtMs] = useState<
     number | undefined
   >(undefined)
-  const [suggestionHides, setSuggestionHides] = useState<
-    Record<string, number>
-  >({})
+  const [suggestionHides, setSuggestionHides] = useState<SuggestionHideMap>({})
   const [suggestionTick, setSuggestionTick] = useState(() => Date.now())
   const lastSyncedFingerprintRef = useRef<string>('')
 
@@ -223,6 +235,10 @@ export function usePersistence(
 
   useEffect(() => {
     const activeExpiryTimes = Object.values(activeSuggestionHides)
+      .map((rule) => rule.untilDateMs)
+      .filter(
+        (untilDateMs): untilDateMs is number => typeof untilDateMs === 'number',
+      )
     if (!activeExpiryTimes.length) {
       return
     }

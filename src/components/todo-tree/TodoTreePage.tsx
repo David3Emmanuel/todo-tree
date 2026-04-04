@@ -130,8 +130,9 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     const now = suggestionTick
     return getNextActionSuggestions(tree, suggestionSeedRef.current, 3).filter(
       (item) => {
-        const hiddenUntil = activeSuggestionHides[item.node.id]
-        return hiddenUntil === undefined || hiddenUntil <= now
+        const hideRule = activeSuggestionHides[item.node.id]
+        const hiddenUntilDateMs = hideRule?.untilDateMs
+        return hiddenUntilDateMs === undefined || hiddenUntilDateMs <= now
       },
     )
   }, [activeSuggestionHides, suggestionTick, tree])
@@ -220,7 +221,10 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   const hideSuggestion = (nodeId: string, until: number) => {
     setSuggestionHides((prev) => ({
       ...prev,
-      [nodeId]: until,
+      [nodeId]: {
+        ...prev[nodeId],
+        untilDateMs: until,
+      },
     }))
     setHideMenuId(null)
   }

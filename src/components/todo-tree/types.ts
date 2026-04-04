@@ -23,6 +23,13 @@ export type StarredItem = TreeNode & {
 
 export type ViewMode = 'tree' | 'harvest'
 
+export type SuggestionHideRule = {
+  untilDateMs?: number
+  untilTaskId?: string
+}
+
+export type SuggestionHideMap = Record<string, SuggestionHideRule>
+
 export type CtxValue = {
   tree: TreeNode[]
   setTree: Dispatch<SetStateAction<TreeNode[]>>
@@ -36,6 +43,6 @@ export type PersistedState = {
   tree: TreeNode[]
   zoom: Breadcrumb[]
   view: ViewMode
-  suggestionHides: Record<string, number>
+  suggestionHides: SuggestionHideMap
   serverUpdatedAtMs?: number
 }

@@ -1,4 +1,9 @@
-import type { Breadcrumb, PersistedState, TreeNode } from './types'
+import type {
+  Breadcrumb,
+  PersistedState,
+  SuggestionHideMap,
+  TreeNode,
+} from './types'
 
 const DB_NAME = 'todo-tree'
 const STORE_NAME = 'state'
@@ -33,18 +38,39 @@ function normalizeTree(nodes: TreeNode[]): TreeNode[] {
   })
 }
 
-function normalizeSuggestionHides(value: unknown): Record<string, number> {
+function normalizeSuggestionHides(value: unknown): SuggestionHideMap {
   if (!value || typeof value !== 'object') {
     return {}
   }
 
-  const result: Record<string, number> = {}
-  for (const [key, rawUntil] of Object.entries(
+  const result: SuggestionHideMap = {}
+  for (const [key, rawRule] of Object.entries(
     value as Record<string, unknown>,
   )) {
-    const until = Number(rawUntil)
-    if (Number.isFinite(until) && until > 0) {
-      result[key] = until
+    if (!rawRule || typeof rawRule !== 'object') {
+      continue
+    }
+
+    const parsedRule = rawRule as {
+      untilDateMs?: unknown
+      untilTaskId?: unknown
+    }
+
+    const untilDateMs = Number(parsedRule.untilDateMs)
+    const untilTaskId =
+      typeof parsedRule.untilTaskId === 'string'
+        ? parsedRule.untilTaskId.trim()
+        : ''
+
+    const normalizedRule = {
+      ...(Number.isFinite(untilDateMs) && untilDateMs > 0
+        ? { untilDateMs }
+        : {}),
+      ...(untilTaskId ? { untilTaskId } : {}),
+    }
+
+    if (Object.keys(normalizedRule).length > 0) {
+      result[key] = normalizedRule
     }
   }
 
