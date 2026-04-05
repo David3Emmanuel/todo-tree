@@ -19,7 +19,6 @@ import {
   Plus,
   Undo2,
   Wheat,
-  X,
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from '@tanstack/react-router'
@@ -31,7 +30,7 @@ import {
 import { useAuth } from '../auth/auth-context'
 import { BrandHeader } from '../layout/BrandHeader'
 import { LoadingScreen } from '../layout/LoadingScreen'
-import { FocusPomodoro } from './FocusPomodoro'
+import { HarvestFocusModal } from './HarvestFocusModal'
 import { HarvestView } from './HarvestView'
 import { HideUntilTaskPicker } from './HideUntilTaskPicker'
 import { TodoCtx } from './todo-context'
@@ -1053,39 +1052,12 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
             </div>
 
             {focusRoot && (
-              <div
-                className="focus-modal-backdrop"
-                onClick={() => setFocusRootId(null)}
+              <HarvestFocusModal
+                focusRoot={focusRoot}
+                onClose={() => setFocusRootId(null)}
               >
-                <section
-                  className="focus-modal island-shell"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label="Harvest subtree"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <div className="focus-modal-head">
-                    <div>
-                      <div className="suggestions-kicker">Harvest</div>
-                      <h2 className="focus-modal-title">
-                        {focusRoot.text || 'Untitled task'}
-                      </h2>
-                    </div>
-                    <button
-                      className="focus-close-btn"
-                      onClick={() => setFocusRootId(null)}
-                      aria-label="Close harvest modal"
-                      title="Close"
-                    >
-                      <X className="icon-sm" aria-hidden="true" />
-                    </button>
-                  </div>
-                  <FocusPomodoro />
-                  <div className="focus-modal-body">
-                    {renderFocusNode(focusRoot)}
-                  </div>
-                </section>
-              </div>
+                {renderFocusNode(focusRoot)}
+              </HarvestFocusModal>
             )}
 
             {showLoginConflictModal && (

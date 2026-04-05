@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, FolderTree, Minus, Wheat, WheatOff, X } from 'lucide-react'
+import { Check, FolderTree, Minus, Wheat, WheatOff } from 'lucide-react'
 import { useTodoCtx } from './todo-context'
 import {
   findNode,
@@ -9,7 +9,7 @@ import {
   upd,
 } from './tree-utils'
 import type { TreeNode } from './types'
-import { FocusPomodoro } from './FocusPomodoro'
+import { HarvestFocusModal } from './HarvestFocusModal'
 
 export function HarvestView() {
   const { tree, setTree } = useTodoCtx()
@@ -188,37 +188,12 @@ export function HarvestView() {
       })}
 
       {focusRoot && (
-        <div
-          className="focus-modal-backdrop"
-          onClick={() => setFocusRootId(null)}
+        <HarvestFocusModal
+          focusRoot={focusRoot}
+          onClose={() => setFocusRootId(null)}
         >
-          <section
-            className="focus-modal island-shell"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Harvest subtree"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="focus-modal-head">
-              <div>
-                <div className="suggestions-kicker">Harvest</div>
-                <h2 className="focus-modal-title">
-                  {focusRoot.text || 'Untitled task'}
-                </h2>
-              </div>
-              <button
-                className="focus-close-btn"
-                onClick={() => setFocusRootId(null)}
-                aria-label="Close harvest modal"
-                title="Close"
-              >
-                <X className="icon-sm" aria-hidden="true" />
-              </button>
-            </div>
-            <FocusPomodoro />
-            <div className="focus-modal-body">{renderFocusNode(focusRoot)}</div>
-          </section>
-        </div>
+          {renderFocusNode(focusRoot)}
+        </HarvestFocusModal>
       )}
     </div>
   )
