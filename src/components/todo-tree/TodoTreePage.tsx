@@ -219,15 +219,19 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
 
       const rect = button.getBoundingClientRect()
       const cardRect = card.getBoundingClientRect()
-      const menuLeft = Math.max(8, rect.left + rect.width / 2)
+      const menuWidth = cardRect.width
+      const idealLeft = rect.left + rect.width / 2 - menuWidth / 2
+      const menuLeft = Math.max(
+        8,
+        Math.min(idealLeft, window.innerWidth - menuWidth - 8),
+      )
 
       setHideMenuPosition({
         position: 'fixed',
         left: `${menuLeft}px`,
         top: `${rect.bottom + 6}px`,
-        width: `${cardRect.width}px`,
+        width: `${menuWidth}px`,
         zIndex: 99999,
-        transform: 'translateX(-50%)',
       })
     }
 
