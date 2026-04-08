@@ -263,9 +263,9 @@ function scoreSuggestion({
   }
 
   if (urgency === 'soon') {
-    score += 20
-  } else if (urgency === 'today') {
     score += 40
+  } else if (urgency === 'today') {
+    score += 80
   }
 
   return score
