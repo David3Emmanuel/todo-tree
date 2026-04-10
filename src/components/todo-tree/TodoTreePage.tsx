@@ -15,7 +15,6 @@ import {
   LogIn,
   LogOut,
   Plus,
-  Search,
   Undo2,
   Wheat,
   X,
@@ -142,8 +141,6 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
   const [hideUntilDate, setHideUntilDate] = useState('')
   const [hideMenuPosition, setHideMenuPosition] =
     useState<CSSProperties | null>(null)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const searchBtnRef = useRef<HTMLButtonElement | null>(null)
   const [pendingSuggestionHides, setPendingSuggestionHides] = useState<
     Record<string, number>
   >({})
@@ -658,6 +655,15 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
       <div className="app">
         <header className="header">
           <BrandHeader />
+          <TreeSearchDropdown
+            tree={tree}
+            onZoom={(path, node) => {
+              const zoomPath =
+                node.children.length > 0 ? path : path.slice(0, -1)
+              setZoomFromUi(zoomPath)
+              setView('tree')
+            }}
+          />
           <div className="tabs">
             <button
               className={`tab${view === 'tree' ? ' active' : ''}`}
@@ -695,15 +701,6 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
                 </button>
               </>
             )}
-            <button
-              ref={searchBtnRef}
-              className={`tab${searchOpen ? ' active' : ''}`}
-              onClick={() => setSearchOpen((prev) => !prev)}
-              title="Search tasks"
-            >
-              <Search className="icon-xs" aria-hidden="true" />
-              <span className="tab-text">Search</span>
-            </button>
             {isAuthenticated ? (
               <button
                 className="tab"
@@ -937,19 +934,6 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
               document.body,
             )
           : null}
-
-        {searchOpen && (
-          <TreeSearchDropdown
-            tree={tree}
-            anchorRef={searchBtnRef}
-            onZoom={(path, node) => {
-              const zoomPath = node.children.length > 0 ? path : path.slice(0, -1)
-              setZoomFromUi(zoomPath)
-              setView('tree')
-            }}
-            onClose={() => setSearchOpen(false)}
-          />
-        )}
 
         {view === 'tree' && zoom.length > 0 && (
           <nav className="breadcrumbs">

@@ -9,6 +9,8 @@ import {
 import { createPortal } from 'react-dom'
 import type { Breadcrumb, TreeNode } from './types'
 
+const PANEL_WIDTH = 280
+
 type SearchOption = {
   node: TreeNode
   path: Breadcrumb[]
@@ -29,18 +31,15 @@ function collectSearchOptions(
 
 export function TreeSearchDropdown({
   tree,
-  anchorRef,
   onZoom,
-  onClose,
 }: {
   tree: TreeNode[]
-  anchorRef: React.RefObject<HTMLButtonElement | null>
   onZoom: (path: Breadcrumb[], node: TreeNode) => void
-  onClose: () => void
 }) {
   const [query, setQuery] = useState('')
+  const [focused, setFocused] = useState(false)
   const [panelStyle, setPanelStyle] = useState<CSSProperties | null>(null)
-  const inputRef = useRef<HTMLInputElement | null>(null)
+  const fieldRef = useRef<HTMLInputElement | null>(null)
 
   const allOptions = useMemo(() => collectSearchOptions(tree), [tree])
 
@@ -52,19 +51,26 @@ export function TreeSearchDropdown({
       .slice(0, 10)
   }, [query, allOptions])
 
+  const isOpen = focused && query.trim().length > 0
+
   useLayoutEffect(() => {
     const update = (): void => {
-      const btn = anchorRef.current
-      if (!btn) {
+      const field = fieldRef.current
+      if (!field || !focused) {
         setPanelStyle(null)
         return
       }
-      const rect = btn.getBoundingClientRect()
+      const rect = field.getBoundingClientRect()
+      const idealLeft = rect.left + rect.width / 2 - PANEL_WIDTH / 2
+      const left = Math.max(
+        8,
+        Math.min(idealLeft, window.innerWidth - PANEL_WIDTH - 8),
+      )
       setPanelStyle({
         position: 'fixed',
-        left: `${rect.left}px`,
+        left: `${left}px`,
         top: `${rect.bottom + 6}px`,
-        width: '20rem',
+        width: `${PANEL_WIDTH}px`,
         zIndex: 99999,
       })
     }
@@ -75,88 +81,79 @@ export function TreeSearchDropdown({
       window.removeEventListener('resize', update)
       window.removeEventListener('scroll', update, true)
     }
-  }, [anchorRef])
+  }, [focused])
 
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
-  useEffect(() => {
+    if (!isOpen) return
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    const onClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      const panel = document.querySelector('[data-tree-search-panel="true"]')
-      const btn = anchorRef.current
-      if (
-        panel &&
-        !panel.contains(target) &&
-        (!btn || !btn.contains(target))
-      ) {
-        onClose()
+      if (e.key === 'Escape') {
+        setQuery('')
+        fieldRef.current?.blur()
       }
     }
     window.addEventListener('keydown', onKeyDown)
-    document.addEventListener('click', onClick, true)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      document.removeEventListener('click', onClick, true)
-    }
-  }, [anchorRef, onClose])
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen])
 
-  if (!panelStyle) return null
+  const panel =
+    isOpen && panelStyle
+      ? createPortal(
+          <div
+            className="tree-search-panel"
+            data-tree-search-panel="true"
+            style={panelStyle}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => {
+                const parentPath = opt.path
+                  .slice(0, -1)
+                  .map((c) => c.text || 'Untitled')
+                  .join(' › ')
+                return (
+                  <button
+                    key={opt.node.id}
+                    className="tree-search-option"
+                    type="button"
+                    onClick={() => {
+                      onZoom(opt.path, opt.node)
+                      setQuery('')
+                      fieldRef.current?.blur()
+                    }}
+                    role="option"
+                    aria-selected={false}
+                  >
+                    <span className="tree-search-option-main">
+                      {opt.node.text || 'Untitled'}
+                    </span>
+                    <span className="tree-search-option-meta">
+                      {parentPath || 'Root level'}
+                    </span>
+                  </button>
+                )
+              })
+            ) : (
+              <div className="tree-search-empty">No tasks match.</div>
+            )}
+          </div>,
+          document.body,
+        )
+      : null
 
-  return createPortal(
-    <div
-      className="tree-search-panel"
-      data-tree-search-panel="true"
-      style={panelStyle}
-      onClick={(e) => e.stopPropagation()}
-    >
+  return (
+    <>
       <input
-        ref={inputRef}
+        ref={fieldRef}
         className="tree-search-input"
-        type="text"
+        type="search"
         value={query}
-        placeholder="Search tasks and folders..."
+        placeholder="Search…"
         onChange={(e) => setQuery(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        aria-label="Search tasks"
       />
-      {query.trim() && (
-        <div className="tree-search-list" role="listbox">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt) => {
-              const parentPath = opt.path
-                .slice(0, -1)
-                .map((c) => c.text || 'Untitled')
-                .join(' › ')
-              return (
-                <button
-                  key={opt.node.id}
-                  className="tree-search-option"
-                  type="button"
-                  onClick={() => {
-                    onZoom(opt.path, opt.node)
-                    onClose()
-                  }}
-                  role="option"
-                  aria-selected={false}
-                >
-                  <span className="tree-search-option-main">
-                    {opt.node.text || 'Untitled'}
-                  </span>
-                  <span className="tree-search-option-meta">
-                    {parentPath || 'Root level'}
-                  </span>
-                </button>
-              )
-            })
-          ) : (
-            <div className="tree-search-empty">No tasks match.</div>
-          )}
-        </div>
-      )}
-    </div>,
-    document.body,
+      {panel}
+    </>
   )
 }
