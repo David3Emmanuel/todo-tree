@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import {
   Check,
   ChevronRight,
+  ListPlus,
   Square,
   FolderTree,
   Minus,
@@ -429,6 +430,23 @@ export function TodoNode({
               style={menuStyle}
               onClick={(e) => e.stopPropagation()}
             >
+              <button
+                className="node-menu-item"
+                onClick={() => {
+                  setTree((prev) => {
+                    const childNode = makeNode(prev)
+                    pendingEditingIdRef.current = childNode.id
+                    return upd(prev, node.id, (target) => {
+                      target.children.push(childNode)
+                      target.collapsed = false
+                    })
+                  })
+                  setMenuOpen(false)
+                }}
+              >
+                <ListPlus className="icon-xs" aria-hidden="true" />
+                Add subtask
+              </button>
               <button
                 className="node-menu-item"
                 onClick={() => {
