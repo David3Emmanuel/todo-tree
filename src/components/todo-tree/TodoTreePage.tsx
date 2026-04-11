@@ -654,72 +654,76 @@ export function TodoTreePage({ pathSegments }: { pathSegments: string[] }) {
     <TodoCtx.Provider value={ctx}>
       <div className="app">
         <header className="header">
-          <BrandHeader />
-          <TreeSearchDropdown
-            tree={tree}
-            onZoom={(path, node) => {
-              const zoomPath =
-                node.children.length > 0 ? path : path.slice(0, -1)
-              setZoomFromUi(zoomPath)
-              setView('tree')
-            }}
-          />
-          <div className="tabs">
-            <button
-              className={`tab${view === 'tree' ? ' active' : ''}`}
-              onClick={() => setView('tree')}
-            >
-              Tree
-            </button>
-            <button
-              className={`tab${view === 'harvest' ? ' active' : ''}`}
-              onClick={() => setView('harvest')}
-            >
-              <Wheat className="icon-xs" aria-hidden="true" />
-              Harvest{' '}
-              {starred.length > 0 && (
-                <span className="badge">{starred.length}</span>
-              )}
-            </button>
-            {view === 'tree' && displayNodes.length > 0 && (
-              <>
-                <button
-                  className="tab"
-                  onClick={() => setTree(expandAll)}
-                  title="Expand all nodes"
-                >
-                  <ChevronsDown className="icon-xs" aria-hidden="true" />
-                  <span className="tab-text">Expand</span>
-                </button>
-                <button
-                  className="tab"
-                  onClick={() => setTree(collapseAll)}
-                  title="Collapse all nodes"
-                >
-                  <ChevronsUp className="icon-xs" aria-hidden="true" />
-                  <span className="tab-text">Collapse</span>
-                </button>
-              </>
-            )}
-            {isAuthenticated ? (
+          <div className="header-top">
+            <BrandHeader />
+            <div className="tabs">
               <button
-                className="tab"
-                onClick={() => {
-                  logout()
-                  if (typeof window !== 'undefined') {
-                    window.location.assign('/auth')
-                  }
-                }}
+                className={`tab${view === 'tree' ? ' active' : ''}`}
+                onClick={() => setView('tree')}
               >
-                <LogOut className="icon-xs" aria-hidden="true" />
-                <span className="tab-text">Logout</span>
+                Tree
               </button>
-            ) : (
-              <a className="tab" href="/auth">
-                <LogIn className="icon-xs" aria-hidden="true" />
-                <span className="tab-text">Login</span>
-              </a>
-            )}
+              <button
+                className={`tab${view === 'harvest' ? ' active' : ''}`}
+                onClick={() => setView('harvest')}
+              >
+                <Wheat className="icon-xs" aria-hidden="true" />
+                Harvest{' '}
+                {starred.length > 0 && (
+                  <span className="badge">{starred.length}</span>
+                )}
+              </button>
+              {view === 'tree' && displayNodes.length > 0 && (
+                <>
+                  <button
+                    className="tab"
+                    onClick={() => setTree(expandAll)}
+                    title="Expand all nodes"
+                  >
+                    <ChevronsDown className="icon-xs" aria-hidden="true" />
+                    <span className="tab-text">Expand</span>
+                  </button>
+                  <button
+                    className="tab"
+                    onClick={() => setTree(collapseAll)}
+                    title="Collapse all nodes"
+                  >
+                    <ChevronsUp className="icon-xs" aria-hidden="true" />
+                    <span className="tab-text">Collapse</span>
+                  </button>
+                </>
+              )}
+              {isAuthenticated ? (
+                <button
+                  className="tab"
+                  onClick={() => {
+                    logout()
+                    if (typeof window !== 'undefined') {
+                      window.location.assign('/auth')
+                    }
+                  }}
+                >
+                  <LogOut className="icon-xs" aria-hidden="true" />
+                  <span className="tab-text">Logout</span>
+                </button>
+              ) : (
+                <a className="tab" href="/auth">
+                  <LogIn className="icon-xs" aria-hidden="true" />
+                  <span className="tab-text">Login</span>
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="header-search">
+            <TreeSearchDropdown
+              tree={tree}
+              onZoom={(path, node) => {
+                const zoomPath =
+                  node.children.length > 0 ? path : path.slice(0, -1)
+                setZoomFromUi(zoomPath)
+                setView('tree')
+              }}
+            />
           </div>
         </header>
 

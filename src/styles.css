@@ -305,14 +305,22 @@ body,
 
 .header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.8125rem 1.125rem;
   border-bottom: 0.0625rem solid #1c1b1a;
   position: sticky;
   top: 0;
   background: #0f0e0d;
   z-index: 10;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 .brand {
   display: flex;
@@ -622,14 +630,7 @@ body,
 
 @media (max-width: 640px) {
   .header {
-    flex-wrap: wrap;
-    gap: 0.625rem;
-    align-items: flex-start;
     padding: 0.6875rem 0.8125rem;
-  }
-
-  .brand {
-    min-width: 0;
   }
 
   .brand-sub {
@@ -642,7 +643,6 @@ body,
     padding: 0.25rem;
     border-radius: 0.625rem;
   }
-
 
   .tab {
     flex: 1;
@@ -1935,9 +1935,12 @@ body,
   color: #d2cbc3;
 }
 
+.header-search {
+  width: 100%;
+}
+
 .tree-search-input {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   border: 0.0625rem solid #2a2623;
   background: #181716;
   color: #e6dfd6;
